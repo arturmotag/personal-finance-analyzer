@@ -1,6 +1,6 @@
 # Personal Finance Analyzer
 
-#### Video Demo: [TODO: Add YouTube link here]
+#### Video Demo: https://youtu.be/MMJguDDwJQs
 
 #### Description:
 
