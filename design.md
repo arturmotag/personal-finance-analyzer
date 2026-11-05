@@ -2,38 +2,40 @@
 
 ## Overview
 
-Personal Finance Analyzer is a command-line Python application designed to help users record and analyze personal expenses.
+Personal Finance Analyzer is a command-line Python application designed to help users record, store, search, and analyze personal expenses.
 
-The project was developed as a final project for **CS50's Introduction to Programming with Python (CS50P)**. Its purpose is to combine several Python programming concepts into a single practical application rather than implementing them as isolated exercises.
+The project was developed as a final project for **CS50's Introduction to Programming with Python (CS50P)**. Its purpose is to combine multiple Python programming concepts into a single practical application.
 
-The application allows users to create expenses, temporarily store them during a session, save them to a CSV file, retrieve previously saved expenses, search by category or description, and calculate monthly totals.
+The application allows users to create expenses, maintain them in memory during execution, persist them to CSV, reload previously saved expenses when the program starts, search by category or description, and calculate monthly totals.
 
-The project intentionally uses only Python's standard library. This decision keeps the application lightweight while allowing the implementation to focus on programming fundamentals such as functions, classes, regular expressions, exception handling, file I/O, CSV processing, and date manipulation.
+The project intentionally uses only Python's standard library. This keeps the application lightweight while allowing the implementation to focus on concepts such as functions, classes, regular expressions, exception handling, file I/O, CSV processing, and date manipulation.
 
 ---
 
 ## Problem and Scope
 
-Managing small personal expenses can be done with a spreadsheet, notes, or a dedicated financial application. However, these solutions can be unnecessarily complex for someone who simply wants to practice programming while maintaining a basic record of expenses.
+Managing personal expenses can be done using spreadsheets, notes, or financial applications. However, these solutions can be unnecessarily complex for someone who wants a small tool while also practicing programming.
 
-The goal of this project is therefore not to compete with complete financial management software. Instead, it provides a small command-line tool capable of handling the fundamental operations required to record and analyze expenses.
+The goal of this project is not to replace complete financial management software. Instead, it provides a focused command-line application capable of performing fundamental expense-management operations.
 
-The application's scope includes four main responsibilities:
+The application's main responsibilities are:
 
 1. Collecting and validating expense information.
-2. Temporarily storing expenses during a session.
-3. Persisting expenses to CSV files.
-4. Reading, filtering, and summarizing saved expenses.
+2. Representing expenses as structured data.
+3. Loading previously saved expenses from CSV.
+4. Maintaining the current expense collection in memory.
+5. Filtering and analyzing expenses.
+6. Saving the current expense collection back to CSV.
 
 The project does not currently include authentication, a database, a graphical interface, network functionality, or advanced financial analysis.
 
-Keeping the scope limited was an intentional design decision. The project was intended to demonstrate programming knowledge acquired through CS50P while remaining small enough to understand and maintain.
+Keeping the scope limited was intentional. The project focuses on applying the Python concepts learned through CS50P while maintaining a codebase that is understandable and manageable.
 
 ---
 
 ## Program Architecture
 
-The application is organized around a collection of functions and one main class.
+The application is organized around one main class and several functions responsible for different operations.
 
 At a high level, the program follows this flow:
 
@@ -42,6 +44,15 @@ User
  │
  ▼
 main()
+ │
+ ├── Validate username
+ │
+ ├── Create expenses directory
+ │
+ ├── Load existing CSV
+ │       │
+ │       ▼
+ │   user_expenses
  │
  ▼
 menu()
@@ -57,22 +68,22 @@ menu()
  ├── list_expenses()
  │       │
  │       ▼
- │   CSV file
+ │   user_expenses
  │
  ├── monthly_summary()
  │       │
  │       ▼
- │   CSV file
+ │   user_expenses
  │
  ├── search_expenses_by_category()
  │       │
  │       ▼
- │   CSV file
+ │   user_expenses
  │
  ├── search_expenses_description()
  │       │
  │       ▼
- │   CSV file
+ │   user_expenses
  │
  └── export_csv()
          │
@@ -80,19 +91,57 @@ menu()
       CSV file
 ```
 
-The program starts with `main()`, which obtains and validates the user's name before passing it to the main menu.
+The application starts with `main()`.
 
-The `menu()` function is responsible for displaying the available operations and dispatching the user's selection to the corresponding function.
+The user provides a name, which is validated before being used to identify the user's expense file.
 
-This separation prevents the main menu from containing the implementation details of every operation.
+The program then creates the `expenses` directory if necessary and attempts to load the corresponding CSV file.
+
+The contents of the CSV are stored in the global `user_expenses` list.
+
+After initialization, the `menu()` function controls the rest of the application.
+
+---
+
+## Program Initialization
+
+The `main()` function is responsible for preparing the application before the menu is displayed.
+
+First, the username is requested:
+
+```python
+username = input("\nEnter your name: ").strip()
+```
+
+The username is then validated using a regular expression.
+
+After validation, the application creates the storage directory:
+
+```python
+os.makedirs("expenses", exist_ok=True)
+```
+
+The `exist_ok=True` argument means that the program does not fail if the directory already exists.
+
+The application then attempts to load the user's CSV file.
+
+Each existing row is appended to:
+
+```python
+user_expenses
+```
+
+If the file does not exist, the `FileNotFoundError` is intentionally ignored because this simply means that the user does not have previously saved expenses.
+
+This initialization design means that all previously saved expenses become available immediately after the program starts.
 
 ---
 
 ## The `Expenses` Class
 
-The `Expenses` class represents an individual expense.
+The `Expenses` class represents a single expense.
 
-An expense contains four attributes:
+Each instance contains:
 
 ```text
 expense_date
@@ -101,23 +150,11 @@ category
 amount
 ```
 
-The class is defined in `project.py` and receives these values through its constructor.
+The constructor receives these values and stores them as attributes.
 
-The class also contains the `get()` class method, which handles interactive creation of an expense.
+The class also contains the `get()` class method.
 
-The method asks the user for the required values, validates the date and amount, and returns an `Expenses` object when the input is valid.
-
-If the input is invalid, the method returns `None`.
-
-This design keeps the creation and validation of an expense together instead of spreading those responsibilities across multiple functions.
-
----
-
-## Why Use a Class?
-
-A class was chosen because an expense is a natural real-world entity that contains several related pieces of information.
-
-Without a class, the program could represent an expense using a dictionary from the beginning. However, using the `Expenses` class provides a clear object-oriented representation of an expense and demonstrates the use of classes and class methods covered in CS50P.
+The method is responsible for collecting information interactively from the user, validating it, converting it to the appropriate format, and returning an `Expenses` object.
 
 For example:
 
@@ -125,9 +162,17 @@ For example:
 expenses = Expenses.get()
 ```
 
-creates an object representing the user's expense.
+creates an expense object when valid information is provided.
 
-The application can then access:
+---
+
+## Why Use a Class?
+
+A class was chosen because an expense is a natural entity containing multiple related values.
+
+Instead of passing four independent values throughout the program, the `Expenses` class groups those values into a single object.
+
+For example:
 
 ```python
 expenses.expense_date
@@ -136,70 +181,31 @@ expenses.category
 expenses.amount
 ```
 
-This makes the relationship between the data and the object explicit.
+This provides a clear representation of what constitutes an expense.
+
+The class also demonstrates object-oriented programming concepts covered in CS50P.
+
+The `get()` class method further separates the process of obtaining and validating expense information from the rest of the application.
 
 ---
 
 ## Input Validation
 
-Input validation is an important part of the application's design because users interact with the program directly through the command line.
+Input validation is an important part of the application because the program receives information directly from users.
 
-The application validates several types of input.
-
-### Date Validation
-
-The entered date is normalized before being passed to `datetime.strptime()`.
-
-The program accepts common separators and converts them to `/`.
-
-For example:
-
-```text
-2026-10-01
-2026/10/01
-2026\10\01
-2026,10,01
-```
-
-are normalized before being interpreted as a date.
-
-The resulting date is parsed using:
-
-```python
-datetime.strptime(expense_date, "%Y/%m/%d")
-```
-
-This also ensures that impossible dates are rejected.
-
----
-
-### Amount Validation
-
-The amount is validated using a regular expression.
-
-The application accepts values such as:
-
-```text
-10
-10.50
-10,50
-```
-
-and rejects values containing unsupported symbols or more than two decimal places.
-
-After validation, commas are replaced with periods and the value is converted to a `float`.
-
-This allows the application to perform arithmetic when calculating totals.
-
----
+The application validates usernames, dates, and monetary values.
 
 ### Username Validation
 
-The user's name is validated using a regular expression before it is used to construct the CSV filename.
+The username is checked using:
 
-The validation allows letters, numbers, underscores, spaces, and hyphens.
+```python
+re.fullmatch(r"[\w -]+", username)
+```
 
-This prevents arbitrary path characters from being included in the generated filename and keeps the filename predictable.
+This allows letters, numbers, underscores, spaces, and hyphens.
+
+The purpose is to prevent arbitrary characters from being used when constructing the CSV filename.
 
 For example:
 
@@ -213,23 +219,135 @@ are valid examples.
 
 ---
 
-## Data Storage
+### Date Validation
 
-The project uses CSV files as its persistent storage mechanism.
+The application accepts multiple date separators.
 
-Each user's file follows the naming pattern:
+Before parsing the date, the input is normalized:
+
+```python
+re.sub(r"\s*[-/\\,]\s*", "/", ...)
+```
+
+This allows inputs such as:
 
 ```text
-<username>_expenses.csv
+2026/10/01
+2026-10-01
+2026\10\01
+2026,10,01
+```
+
+to be converted into a common representation.
+
+The normalized value is then passed to:
+
+```python
+datetime.strptime(expense_date, "%Y/%m/%d")
+```
+
+This validates both the structure and the actual calendar date.
+
+The resulting `datetime` object is retained by the expense object and later formatted as `YYYY/MM/DD` when stored.
+
+---
+
+### Amount Validation
+
+The amount is first normalized by replacing commas with periods.
+
+A regular expression then verifies that the value contains either:
+
+```text
+whole number
+```
+
+or:
+
+```text
+whole number + decimal point + one or two decimal digits
+```
+
+Examples of valid values include:
+
+```text
+10
+10.5
+10.50
+10,50
+```
+
+After validation, the value is converted to a `float`.
+
+This conversion allows the application to perform calculations when generating totals.
+
+---
+
+## Data Storage
+
+The project uses a combination of **in-memory storage and CSV persistence**.
+
+The global list:
+
+```python
+user_expenses = []
+```
+
+contains the expenses currently loaded into the application.
+
+When the program starts, previously saved CSV records are loaded into this list.
+
+When the user adds a new expense, its data is converted into a dictionary and appended to the same list.
+
+This means that all listing, searching, and analysis operations work against one consistent collection during the program's execution.
+
+---
+
+## Why Use a Global Expense Collection?
+
+The `user_expenses` list acts as the application's current data store while it is running.
+
+This approach allows different functions to access the same expense collection without repeatedly opening and reading the CSV file.
+
+For example:
+
+```text
+CSV
+ │
+ ▼
+user_expenses
+ │
+ ├── List
+ ├── Monthly summary
+ ├── Category search
+ └── Description search
+```
+
+This simplifies the implementation and avoids repeated file operations for every query.
+
+The trade-off is that the application currently keeps the complete expense collection in memory, which would become less appropriate for a very large dataset.
+
+For the scale of this educational project, the approach is sufficient.
+
+---
+
+## CSV Persistence
+
+CSV is used as the persistent storage format.
+
+Each user has a file following this pattern:
+
+```text
+expenses/<username>_expenses.csv
 ```
 
 For example:
 
 ```text
-Artur_expenses.csv
+expenses/Artur_expenses.csv
 ```
 
-The CSV file uses the following fields:
+The CSV contains four fields:
 
 ```text
 Date
@@ -238,94 +356,83 @@ Category
 Amount
 ```
 
-The field names are stored in the `FIELDNAMES` constant.
+These fields are defined in:
+
+```python
+FIELDNAMES = ["Date", "Description", "Category", "Amount"]
+```
+
+The program uses `csv.DictReader` to load existing records and `csv.DictWriter` to save records.
 
 ---
 
 ## Why CSV?
 
-CSV was chosen instead of a database for several reasons.
+CSV was chosen because it provides a simple persistence mechanism without requiring external packages or database configuration.
 
-First, CSV is part of Python's standard library, so no external dependencies are necessary.
+It also has several practical advantages for this project:
 
-Second, the amount of data expected by this project is relatively small. A full database system would introduce additional complexity without providing a significant benefit for the current scope.
+* It is human-readable.
+* It can be opened using spreadsheet applications.
+* It is supported directly by Python's standard library.
+* It is sufficient for a small dataset.
+* It keeps the project focused on Python fundamentals.
 
-Third, CSV files are human-readable and can be opened using common spreadsheet applications.
-
-The trade-off is that CSV does not provide the same querying, constraints, indexing, concurrency, and data integrity capabilities that a database such as SQLite would provide.
-
-For this project's scale, the simplicity of CSV outweighs those limitations.
-
----
-
-## Session Data and Persistence
-
-The program uses the global list:
-
-```python
-user_expenses = []
-```
-
-as a temporary in-memory buffer.
-
-When a user adds an expense, the expense is converted into a dictionary with the appropriate CSV field names and appended to this list.
-
-For example:
-
-```python
-{
-    "Date": "2026/10/01",
-    "Description": "Groceries",
-    "Category": "Food",
-    "Amount": 150.0
-}
-```
-
-The data remains in memory until the user chooses the export option.
-
-At that point, `export_csv()` writes the accumulated records to the user's CSV file and clears the temporary list.
-
-This design separates the process of creating expenses from the process of persisting them.
-
-A consequence of this design is that expenses added during the current session are not available to the CSV-based search and listing functions until they are saved.
-
-This is a known limitation of the current implementation rather than an accidental behavior.
+A database such as SQLite would provide stronger querying and data-management capabilities, but it would also introduce additional concepts that are unnecessary for the current scope.
 
 ---
 
-## Reading and Writing CSV Data
+## Saving and Exporting
 
-The `csv.DictWriter` class is used to write dictionaries to CSV files.
+The `export_csv()` function is responsible for persisting the current contents of `user_expenses`.
 
-When a user's CSV file does not yet exist, the program creates it and writes the header before adding the expenses.
-
-When the file already exists, the program opens it in append mode and adds the new expenses.
-
-The relevant file modes are:
-
-```text
-"x"  → create a new file
-"a"  → append to an existing file
-"r"  → read an existing file
-```
-
-`csv.DictReader` is used when retrieving saved data.
-
-Using dictionaries makes the code easier to understand because each value can be accessed using its corresponding field name, such as:
+If the user's CSV file does not exist, the program opens it using:
 
 ```python
-row["Date"]
-row["Category"]
-row["Amount"]
+"x"
 ```
+
+The header is then written before the expenses.
+
+If the file already exists, the program opens it using:
+
+```python
+"w"
+```
+
+and rewrites the file from the current contents of `user_expenses`.
+
+This design means that the saved CSV represents the current state of the in-memory expense collection.
+
+After a successful save, the list is cleared:
+
+```python
+user_expenses.clear()
+```
+
+This prepares the list for the next session of expense additions.
+
+Because previously saved expenses are loaded into the list when the program starts, rewriting the file does not intentionally discard existing records.
+
+---
+
+## Listing Expenses
+
+The `list_expenses()` function displays the expenses contained in `user_expenses`.
+
+Rather than opening the CSV file again, it works directly with the in-memory collection.
+
+For each expense, the function iterates through its dictionary entries and displays the field name and value.
+
+This keeps listing consistent with the data currently being used by the search and summary functions.
 
 ---
 
 ## Monthly Summary
 
-The monthly summary function allows the user to select a month and year.
+The `monthly_summary()` function allows the user to select a month and year.
 
-The input is parsed using several accepted formats:
+Three input formats are accepted:
 
 ```text
 %m/%Y
@@ -333,7 +440,7 @@ The input is parsed using several accepted formats:
 %B/%Y
 ```
 
-This allows inputs such as:
+Examples include:
 
 ```text
 10/2026
@@ -341,156 +448,170 @@ Oct/2026
 October/2026
 ```
 
-The program then reads each saved expense and converts its date back into a `datetime` object.
+Each expense date is converted into a `datetime` object.
 
-The month and year of each expense are compared with the month and year selected by the user.
+The month and year are then compared with the selected month and year.
 
-When a match is found, the expense is displayed and its amount is added to the running total.
+When a matching expense is found:
 
-A separate Boolean variable named `found` is used to determine whether any matching expenses were found.
+1. The expense is displayed.
+2. `found` is set to `True`.
+3. Its amount is added to the total.
 
-This is preferable to using the total itself to determine whether a result exists because an expense could theoretically have a value of zero.
+The separate `found` Boolean is important because the total amount should not be used to determine whether results exist. A matching expense could theoretically have a value of zero.
 
 ---
 
 ## Search Functionality
 
-The project contains two search operations:
+The application provides two search functions:
 
 ```text
-Search by category
-Search by description
+search_expenses_by_category()
+search_expenses_description()
 ```
 
-Both searches are case-insensitive.
+Both operate on `user_expenses`.
+
+### Category Search
+
+The category search is case-insensitive and supports partial matches.
 
 For example:
+
+```python
+if category.lower() in expense["Category"].lower():
+```
+
+allows a query such as:
 
 ```text
 food
 ```
 
-can match:
+to match:
 
 ```text
 Food
-FOOD
 Fast Food
+FOOD
 ```
 
-The search also supports partial matches because the query is checked using the `in` operator.
+The amounts of matching expenses are also accumulated.
+
+---
+
+### Description Search
+
+The description search follows the same approach.
 
 For example:
 
 ```python
-if category.lower() in row["Category"].lower():
+if description.lower() in expense["Description"].lower():
 ```
 
-This provides a more flexible user experience than requiring an exact match.
+allows a partial description to find matching records.
 
-The matching expenses are displayed and their amounts are accumulated into a total.
+The total amount of the matching expenses is calculated and displayed.
 
 ---
 
 ## Error Handling
 
-The application uses exception handling to deal with invalid input and file-related problems.
+The application uses exception handling to deal with invalid input and file-related conditions.
 
-For input validation, invalid dates result in a `ValueError`, which is handled by the application.
+### `ValueError`
 
-The application also handles situations where the user's CSV file does not exist using:
+Used when invalid date information cannot be converted into a valid `datetime`.
 
-```python
-FileNotFoundError
-```
+### `FileNotFoundError`
 
-When saving data, the application handles:
+Used during application initialization when the user's CSV file does not yet exist.
 
-```python
-FileExistsError
-```
+This exception is intentionally ignored because a missing file simply indicates that there are no previously saved expenses.
 
-because the file creation mode intentionally requires the file not to already exist.
+### `FileExistsError`
 
-The application also handles operating-system-level file errors with:
+Handled by `export_csv()` when the user's CSV file already exists.
 
-```python
-OSError
-```
+### `PermissionError` and `OSError`
 
-This prevents the program from reporting a successful export when the underlying file operation has failed.
+Handled during CSV saving to prevent the application from reporting a successful save when the operating system does not allow the file operation to complete.
 
 ---
 
 ## Function Responsibilities
 
-The program uses separate functions for different tasks.
+The application separates its responsibilities into several functions.
 
 ### `main()`
 
-Responsible for starting the application, obtaining the username, validating it, and opening the main menu.
+Initializes the application, validates the username, creates the storage directory, loads existing expenses, and starts the menu.
 
 ### `menu()`
 
-Displays the available options and routes the user's selection to the appropriate function.
+Displays the available operations and directs the user to the selected function.
 
 ### `add_expense()`
 
-Creates expense objects and adds their data to the temporary session buffer.
+Obtains new expenses through `Expenses.get()` and adds their data to the in-memory expense collection.
 
 ### `list_expenses()`
 
-Reads and displays all expenses stored in the user's CSV file.
+Displays the expenses currently stored in `user_expenses`.
 
 ### `monthly_summary()`
 
-Filters saved expenses by month and year and calculates their total.
+Filters expenses by month and year and calculates the total.
 
 ### `search_expenses_by_category()`
 
-Searches saved expenses using their category.
+Searches expenses using their category.
 
 ### `search_expenses_description()`
 
-Searches saved expenses using their description.
+Searches expenses using their description.
 
 ### `export_csv()`
 
-Writes the current session's expenses to the user's CSV file.
-
-This separation makes the program easier to understand and maintain because each function has a relatively focused responsibility.
+Persists the current expense collection to the user's CSV file.
 
 ---
 
 ## Design Trade-offs
 
-Several design decisions were made to keep the project within an appropriate scope.
+Several design decisions were made to keep the application appropriate for the project's scope.
+
+### In-Memory Collection + CSV
+
+Using `user_expenses` as the active data collection allows all operations to work with the same dataset.
+
+CSV then provides persistence between program executions.
+
+This is simpler than repeatedly accessing the file for every operation.
 
 ### CSV Instead of SQLite
 
-SQLite would provide stronger data management capabilities, but it would also introduce database-specific concepts that are not necessary for the current version.
+SQLite would be more scalable and provide more advanced querying capabilities, but CSV is sufficient for the current dataset and avoids introducing unnecessary complexity.
 
-CSV provides sufficient persistence for the project's intended scale.
+### Command-Line Interface
 
-### Command-Line Interface Instead of GUI
+A command-line interface keeps the application focused on Python programming rather than graphical interface development.
 
-A graphical interface could make the application more accessible, but implementing one would shift the focus away from the Python programming concepts being demonstrated.
+It also makes the application simple to run on different systems.
 
-The command-line interface keeps the project lightweight and allows the core functionality to remain the focus.
+### Standard Library Only
 
-### Standard Library Instead of Third-Party Packages
+The application does not require third-party packages.
 
-The application does not require external dependencies.
+This makes setup straightforward and demonstrates that the project's functionality can be implemented using Python's standard library.
 
-This makes installation simpler and demonstrates that a useful Python application can be built using the standard library.
+### Rewriting the CSV on Save
 
-### Session Buffer Instead of Immediate Persistence
+The save operation rewrites the CSV based on the current in-memory collection.
 
-The current design collects expenses in memory and saves them when the user chooses the export option.
-
-This keeps the expense creation workflow simple, but it means that the user must explicitly save the session before the data becomes available to the CSV-based analysis functions.
-
-A future version could persist each expense immediately after it is created.
+This provides a simple way to keep the persistent file synchronized with the application's current state.
 
 ---
 
@@ -500,58 +621,91 @@ The current design has several limitations.
 
 ### No Database
 
-CSV is appropriate for the current scope but does not scale as well as a database.
+CSV does not provide the querying, indexing, constraints, and scalability of a database.
 
-### No User Authentication
+### No Authentication
 
-The username identifies the CSV file but does not provide security or authentication.
+The username identifies a file but does not represent a secure user account.
 
 ### No Expense Editing or Deletion
 
-The current application focuses on adding, viewing, searching, and summarizing expenses. It does not currently provide operations for modifying or deleting individual records.
+The current interface does not provide dedicated commands for editing or deleting an individual expense.
 
 ### No Income Tracking
 
-Only expenses are represented.
+The application currently handles expenses only.
 
-### No Graphical Analysis
+### No Visualization
 
-The application provides numerical summaries but does not generate charts or visualizations.
+The application produces textual results rather than charts or dashboards.
 
-### Session-Based Persistence
+### In-Memory Dataset
 
-New expenses are stored in memory until the user explicitly chooses to save them.
+All currently loaded expenses are kept in memory. This is appropriate for a small application but would become less efficient with a very large dataset.
 
-### Floating-Point Monetary Representation
+### Floating-Point Monetary Values
 
-Amounts are currently converted to `float`. For a small educational application this is sufficient for demonstrating arithmetic and data processing, but a production financial application would generally require more careful monetary representation to avoid floating-point precision issues.
+Amounts are represented using `float`. This is sufficient for the educational purpose of the project, but financial software intended for production use would generally require a more precise approach to monetary values.
 
 ---
 
 ## Future Improvements
 
-Several improvements could be made while preserving the core architecture.
+The current architecture provides several possible directions for future development.
 
-The first improvement would be to add automated tests for validation, searching, calculations, and file operations. This would make future changes safer and would further demonstrate the testing concepts taught in CS50P.
+### Automated Testing
 
-The storage layer could eventually be migrated from CSV to SQLite. This would make it easier to support operations such as editing, deleting, sorting, and querying large numbers of expenses.
+Automated tests could be added to verify:
 
-The application could also be extended to track income and calculate additional financial metrics such as balance, spending by category, and budget utilization.
+* Date validation
+* Amount validation
+* Expense creation
+* Category searches
+* Description searches
+* Monthly summaries
+* CSV persistence
 
-A future data-analysis version could use libraries such as Pandas and Matplotlib to transform the stored expenses into charts and more advanced reports. A graphical or web interface could also be built on top of the same core concepts.
+### Expense Editing and Deletion
 
-These improvements were intentionally left outside the scope of the current project so that the implementation could remain focused on the Python fundamentals learned in CS50P.
+Additional operations could allow users to modify or remove individual records.
+
+### Income and Balance Tracking
+
+The application could be expanded to record income and calculate balances.
+
+### SQLite
+
+The CSV storage layer could eventually be replaced by SQLite to support more sophisticated queries and data management.
+
+### Data Visualization
+
+Pandas and Matplotlib could be introduced in a future version to generate charts showing spending patterns and category distributions.
+
+### Graphical or Web Interface
+
+The existing application logic could serve as a foundation for a GUI or web application.
 
 ---
 
 ## Conclusion
 
-Personal Finance Analyzer was designed as a practical way to bring together the Python concepts learned throughout CS50P.
+Personal Finance Analyzer was designed as a practical application of the Python concepts learned throughout CS50P.
 
-The project combines object-oriented programming, functions, regular expressions, exception handling, file I/O, CSV processing, date manipulation, input validation, searching, filtering, and numerical calculations in a single application.
+The project combines:
 
-The design prioritizes simplicity and clarity over unnecessary complexity. CSV was selected as a lightweight persistence mechanism, the command-line interface keeps the application easy to run, and the program's functionality is divided into focused functions.
+* Object-oriented programming
+* Functions
+* Class methods
+* Regular expressions
+* Input validation
+* Exception handling
+* File I/O
+* CSV processing
+* Date manipulation
+* Searching and filtering
+* Numerical calculations
+* Command-line application design
 
-Although the current implementation has limitations, its architecture provides a foundation for future versions that could introduce automated testing, SQLite, data visualization, income tracking, and a graphical or web interface.
+The architecture intentionally remains simple. Expenses are represented as objects during creation, maintained in an in-memory collection during execution, and persisted through CSV files.
 
-The project therefore represents not only a final CS50P assignment, but also a starting point for continuing to develop Python and data-analysis skills.
+This approach provides a balance between functionality and simplicity while leaving a clear foundation for future improvements such as automated testing, SQLite storage, data visualization, and a graphical or web interface.

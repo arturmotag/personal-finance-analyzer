@@ -6,9 +6,9 @@
 
 Personal Finance Analyzer is a command-line application written in Python that allows users to record, store, search, and analyze their personal expenses.
 
-This project was developed as my final project for **CS50's Introduction to Programming with Python (CS50P)**. The main goal was to apply the programming concepts learned throughout the course to a practical problem while building a complete, functional Python application from scratch.
+This project was developed as my final project for **CS50's Introduction to Programming with Python (CS50P)**. Its purpose is to apply the programming concepts learned throughout the course to a practical problem while building a complete Python application from scratch.
 
-The application focuses on managing expenses through a simple command-line interface. Users can enter expenses with a date, description, category, and amount, save their expenses to a CSV file, list previously saved expenses, search for expenses, and calculate the total expenses for a specific month.
+The application provides a simple command-line interface where users can add expenses containing a date, description, category, and amount. Expenses can then be listed, filtered by category or description, analyzed by month, and saved to a CSV file.
 
 The project uses only Python's standard library, including `csv`, `datetime`, `re`, `os`, and `sys`. No external libraries or frameworks are required.
 
@@ -27,24 +27,33 @@ Each expense contains:
 * Category
 * Amount
 
-The program validates the date and amount before adding an expense to the current session.
+The application validates the date and amount before adding the expense to the current collection.
 
-Dates can be entered using common separators such as `/`, `-`, `\`, or `,`, while the application internally stores dates using the `YYYY/MM/DD` format.
+Dates can be entered using common separators such as `/`, `-`, `\`, or `,`. Regardless of the separator used, dates are stored internally using the `YYYY/MM/DD` format.
 
-Amounts can use either a period or comma as the decimal separator. For example:
+For example:
+
+```text
+2026/10/01
+2026-10-01
+2026\10\01
+2026,10,01
+```
+
+Amounts accept either a period or comma as the decimal separator:
 
 ```text
 25.90
 25,90
 ```
 
-The program also rejects invalid monetary formats and symbols.
+The application rejects unsupported monetary formats and symbols.
 
 ---
 
-### List Saved Expenses
+### List Expenses
 
-The application can read the user's CSV file and display all previously saved expenses.
+The application can display all expenses currently loaded into the user's expense collection.
 
 Each expense is displayed with its:
 
@@ -55,15 +64,19 @@ Category
 Amount
 ```
 
-If no CSV file exists for the user, the application informs them that the file could not be found.
+If there are no expenses available, the application displays:
+
+```text
+No expenses found
+```
 
 ---
 
 ### Monthly Summary
 
-Users can enter a month and year to find all expenses recorded during that period.
+Users can select a month and year to find all expenses recorded during that period.
 
-The application accepts:
+The application accepts the following formats:
 
 ```text
 10/2026
@@ -71,7 +84,7 @@ Oct/2026
 October/2026
 ```
 
-The program then displays the matching expenses and calculates their total amount.
+The program displays all matching expenses and calculates their total amount.
 
 For example:
 
@@ -93,7 +106,7 @@ Total expenses: 170.0
 
 ### Search by Category
 
-Users can search their saved expenses by category.
+Users can search their expenses by category.
 
 The search is case-insensitive and supports partial matches.
 
@@ -103,13 +116,15 @@ For example, searching for:
 food
 ```
 
-can find an expense categorized as:
+can find categories such as:
 
 ```text
 Food
+FOOD
+Fast Food
 ```
 
-The application also calculates the total value of the matching expenses.
+The application also calculates the total amount of the matching expenses.
 
 ---
 
@@ -117,7 +132,7 @@ The application also calculates the total value of the matching expenses.
 
 Users can search expenses using their descriptions.
 
-Like the category search, this search is case-insensitive and supports partial matches.
+The search is case-insensitive and supports partial matches.
 
 For example, searching for:
 
@@ -131,18 +146,26 @@ can find:
 Supermarket
 ```
 
-The total amount of all matching expenses is also displayed.
+The total value of the matching expenses is also calculated and displayed.
 
 ---
 
 ### CSV Persistence
 
-Expenses are stored in CSV files named according to the user's name.
+The application uses CSV files to persist the user's expenses.
+
+Each user has a CSV file named according to the following pattern:
+
+```text
+<username>_expenses.csv
+```
+
+The files are stored inside the project's `expenses` directory.
 
 For example:
 
 ```text
-Artur_expenses.csv
+expenses/Artur_expenses.csv
 ```
 
 The CSV file contains the following fields:
@@ -151,7 +174,9 @@ The CSV file contains the following fields:
 Date,Description,Category,Amount
 ```
 
-CSV was chosen because it is a simple, human-readable format that is well suited to a small command-line application and can also be opened using spreadsheet software.
+When the application starts, it creates the `expenses` directory if necessary and attempts to load the user's existing CSV file into memory.
+
+This allows previously saved expenses to be immediately available for listing, searching, and analysis.
 
 ---
 
@@ -184,13 +209,13 @@ Depending on your operating system, you may need to use:
 python3 project.py
 ```
 
-The program will ask for the user's name and then display the main menu.
+The application will ask for the user's name and then load any previously saved expenses associated with that name.
 
 ---
 
 ## How to Use
 
-After starting the program, the main menu displays the following options:
+After starting the program, the main menu provides the following options:
 
 ```text
 1. Add expense
@@ -198,29 +223,15 @@ After starting the program, the main menu displays the following options:
 3. Monthly summary
 4. Search expenses by category
 5. Search expenses by description
-6. Export expenses to csv
+6. Save and export expenses to csv
 7. Exit
 ```
 
-### Example Workflow
+### 1. Add Expense
 
-A typical session can look like this:
+Select option `1` and enter the requested information.
 
-```text
-Enter your name: Artur
-
-Hello, Artur!
-
-1. Add expense
-2. List expenses
-3. Monthly summary
-4. Search expenses by category
-5. Search expenses by description
-6. Export expenses to csv
-7. Exit
-```
-
-The user can select option `1` and enter an expense:
+Example:
 
 ```text
 Date: 2026/10/01
@@ -229,24 +240,92 @@ Category: Food
 Amount: 150,90
 ```
 
-The application converts the comma decimal separator into a period and stores the amount as a numeric value.
+The application validates the information and adds the expense to the current expense collection.
 
-The user can then add additional expenses or return to the main menu.
+The user can continue adding expenses or return to the main menu.
 
-When the user selects option `6`, the current session's expenses are written to the user's CSV file.
+---
+
+### 2. List Expenses
+
+Select option `2` to display all expenses currently available.
+
+Previously saved expenses are loaded automatically when the program starts, while newly added expenses are kept in memory until they are saved.
+
+---
+
+### 3. Monthly Summary
+
+Select option `3` and enter a month and year.
+
+For example:
+
+```text
+Enter the month and the year (mm/yyyy): 10/2026
+```
+
+The program searches the expense collection for matching dates and calculates the total.
+
+---
+
+### 4. Search by Category
+
+Select option `4` and enter a category.
+
+For example:
+
+```text
+Enter the category of the expenses: food
+```
+
+The program searches for case-insensitive partial matches and displays the matching expenses and their total.
+
+---
+
+### 5. Search by Description
+
+Select option `5` and enter a description.
+
+For example:
+
+```text
+Enter the description of the expenses: market
+```
+
+The application displays matching expenses and calculates their total.
+
+---
+
+### 6. Save and Export Expenses
+
+Select option `6` to save the current expense collection to the user's CSV file.
+
+If the CSV file does not exist, it is created with the appropriate header.
+
+If the file already exists, it is rewritten using the current contents of the expense collection.
+
+This ensures that the CSV file reflects the current state of the application.
+
+---
+
+### 7. Exit
+
+Select option `7` to close the application.
 
 ---
 
 ## Project Structure
 
-The project currently contains the following main source file:
+The project uses the following structure:
 
 ```text
 personal-finance-analyzer/
 │
 ├── project.py
 ├── README.md
-└── DESIGN.md
+├── DESIGN.md
+└── expenses/
+    └── <username>_expenses.csv
 ```
 
 ### `project.py`
@@ -254,9 +333,11 @@ personal-finance-analyzer/
 Contains the complete application, including:
 
 * The `Expenses` class
-* User input and validation
-* Main menu
+* Input validation
+* Main program flow
+* Command-line menu
 * Expense creation
+* Expense storage
 * CSV reading and writing
 * Monthly summaries
 * Category searches
@@ -269,36 +350,42 @@ Provides instructions for installing, running, and using the application.
 
 ### `DESIGN.md`
 
-Explains the technical architecture of the application and the reasoning behind its main design decisions.
+Explains the architecture and design decisions behind the application.
+
+### `expenses/`
+
+Stores CSV files containing the user's saved expenses.
+
+The directory is automatically created by the application when it starts.
 
 ---
 
 ## Technologies and Python Concepts
 
-The project was intentionally implemented using Python's standard library so that the application could focus on the programming concepts covered by CS50P.
+The project was implemented using Python's standard library and applies several concepts covered by CS50P.
 
 ### Python
 
-The application uses Python for all application logic and user interaction.
+Python is used for the entire application, including user interaction, data processing, validation, and file management.
 
 ### Object-Oriented Programming
 
-The `Expenses` class represents an expense as an object containing:
+The `Expenses` class represents an individual expense containing:
 
 * Date
 * Description
 * Category
 * Amount
 
-This provides a structured representation of the data being processed by the application.
+### Class Methods
+
+The `Expenses.get()` class method is responsible for collecting and validating expense information before creating an `Expenses` object.
 
 ### Regular Expressions
 
-The `re` module is used to validate user input.
+The `re` module is used to validate:
 
-Regular expressions are used to validate:
-
-* User names
+* Usernames
 * Monetary amounts
 * Date separators
 
@@ -306,20 +393,29 @@ Regular expressions are used to validate:
 
 The `datetime` module is used to:
 
-* Parse dates
 * Validate dates
+* Parse dates
 * Compare months and years
 * Generate monthly summaries
 
 ### CSV
 
-Python's `csv` module is used to persist expenses in a structured text format.
+Python's `csv` module is used to store and retrieve expenses.
 
-The application uses `csv.DictReader` and `csv.DictWriter` to read and write records using field names.
+The project uses:
+
+* `csv.DictReader`
+* `csv.DictWriter`
+
+to work with structured expense records.
+
+### File I/O
+
+The project reads and writes CSV files using Python's built-in file handling functionality.
 
 ### Exception Handling
 
-The application handles invalid user input and file-related errors using Python's exception-handling mechanisms.
+The application handles invalid input and file-related errors using Python's exception-handling mechanisms.
 
 Examples include:
 
@@ -328,9 +424,9 @@ Examples include:
 * `FileExistsError`
 * `OSError`
 
-### File I/O
+### Data Processing
 
-The application reads from and writes to CSV files using Python's built-in file handling functionality.
+The application performs filtering, searching, and aggregation operations over the expense collection.
 
 ---
 
@@ -340,16 +436,16 @@ The project was designed around four main goals:
 
 1. **Practicality** — solve a simple real-world problem.
 2. **Simplicity** — keep the application understandable and easy to run.
-3. **Application of CS50P concepts** — use the Python concepts taught throughout the course in a meaningful way.
-4. **Extensibility** — provide a foundation that could later be expanded with additional functionality.
+3. **Application of CS50P concepts** — use Python concepts from the course in a meaningful application.
+4. **Extensibility** — create a foundation that can be expanded with additional functionality.
 
-The project deliberately avoids unnecessary frameworks and external dependencies. This keeps the application focused on Python fundamentals and makes it easy for users to run locally.
+The application intentionally avoids external frameworks and dependencies, keeping the focus on Python fundamentals and problem solving.
 
 ---
 
 ## Current Limitations
 
-The current version is intentionally a small command-line application and has some limitations.
+The current version is a command-line application and therefore has several limitations.
 
 ### Command-Line Interface
 
@@ -357,19 +453,29 @@ The application does not currently provide a graphical or web interface.
 
 ### CSV Storage
 
-Expenses are stored in CSV files rather than a database. This is appropriate for the current scope, but a database would become more suitable for a larger application.
+Expenses are stored in CSV files instead of a database.
 
-### Session-Based Expense Buffer
-
-New expenses are kept in memory until the user chooses the CSV export option. Therefore, newly added expenses are not available to the listing and search functions until they have been saved to the CSV file.
+This keeps the project simple but would become less suitable as the amount of data and the complexity of operations increase.
 
 ### No Authentication
 
-The username is used to determine the CSV filename, but the application does not provide authentication or user accounts.
+The username determines which CSV file is used, but it does not provide authentication or account security.
 
-### No Visualization
+### Expense Management
 
-The current version provides textual summaries but does not generate charts or graphical reports.
+The current version focuses on adding, listing, searching, and analyzing expenses. It does not currently provide dedicated operations for editing or deleting individual expenses.
+
+### No Income Tracking
+
+The application currently focuses exclusively on expenses.
+
+### No Data Visualization
+
+Financial information is presented as text and numerical totals rather than charts or dashboards.
+
+### Floating-Point Monetary Representation
+
+Amounts are stored as floating-point numbers. This is appropriate for the educational scope of the project, but production financial software would generally use a more precise monetary representation.
 
 ---
 
@@ -380,11 +486,11 @@ The project could be extended in several directions.
 Possible improvements include:
 
 * Adding automated tests
-* Adding input validation for descriptions and categories
-* Improving the formatting of monetary values
 * Adding expense editing and deletion
 * Adding income tracking
-* Adding budget limits
+* Adding budget management
+* Improving monetary formatting
+* Adding expense sorting
 * Adding graphical data visualization
 * Using Pandas for more advanced data analysis
 * Migrating from CSV to SQLite
@@ -392,15 +498,16 @@ Possible improvements include:
 * Creating a web-based version
 * Adding more detailed financial reports
 
-These improvements are outside the scope of the current CS50P implementation but could serve as possible future iterations of the project.
+These improvements are outside the scope of the current CS50P implementation but provide possible directions for future development.
 
 ---
 
 ## Learning Outcomes
 
-Developing this project helped reinforce several Python programming concepts, particularly:
+Developing this project provided practical experience with:
 
-* Functions and modular program design
+* Python programming
+* Functions and modular design
 * Classes and objects
 * Class methods
 * Regular expressions
@@ -408,12 +515,12 @@ Developing this project helped reinforce several Python programming concepts, pa
 * File input and output
 * CSV processing
 * Date and time manipulation
-* Loops and conditionals
 * Data validation
-* Searching and filtering data
+* Searching and filtering
+* Numerical calculations
 * Command-line application design
 
-More importantly, the project provided an opportunity to combine these concepts into a single application rather than practicing them independently.
+The project also provided an opportunity to combine these concepts into a single application with persistent data rather than using them only in isolated exercises.
 
 ---
 
@@ -421,7 +528,7 @@ More importantly, the project provided an opportunity to combine these concepts 
 
 **Artur Mota**
 
-Computer Science / Systems Development student interested in Python, data analysis, and software development.
+Systems Development student interested in Python, data analysis, and software development.
 
 This project was developed as part of my studies in **CS50's Introduction to Programming with Python (CS50P)**.
 
